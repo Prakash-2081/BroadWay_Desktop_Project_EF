@@ -1,0 +1,15 @@
+C:\BroadWay\DemoEF\DemoEF.BAL\bin\Debug\net8.0\DemoEF.BAL.deps.json
+C:\BroadWay\DemoEF\DemoEF.BAL\bin\Debug\net8.0\DemoEF.BAL.dll
+C:\BroadWay\DemoEF\DemoEF.BAL\bin\Debug\net8.0\DemoEF.BAL.pdb
+C:\BroadWay\DemoEF\DemoEF.BAL\bin\Debug\net8.0\DemoEF.DAL.dll
+C:\BroadWay\DemoEF\DemoEF.BAL\bin\Debug\net8.0\DemoEF.DAL.pdb
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\DemoEF.BAL.csproj.AssemblyReference.cache
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\DemoEF.BAL.GeneratedMSBuildEditorConfig.editorconfig
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\DemoEF.BAL.AssemblyInfoInputs.cache
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\DemoEF.BAL.AssemblyInfo.cs
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\DemoEF.BAL.csproj.CoreCompileInputs.cache
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\DemoEF.BAL.csproj.Up2Date
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\DemoEF.BAL.dll
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\refint\DemoEF.BAL.dll
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\DemoEF.BAL.pdb
+C:\BroadWay\DemoEF\DemoEF.BAL\obj\Debug\net8.0\ref\DemoEF.BAL.dll

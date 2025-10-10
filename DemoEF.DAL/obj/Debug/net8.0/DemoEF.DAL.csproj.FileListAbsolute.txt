@@ -1,0 +1,14 @@
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\DemoEF.DAL.csproj.AssemblyReference.cache
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\DemoEF.DAL.GeneratedMSBuildEditorConfig.editorconfig
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\DemoEF.DAL.AssemblyInfoInputs.cache
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\DemoEF.DAL.AssemblyInfo.cs
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\DemoEF.DAL.csproj.CoreCompileInputs.cache
+C:\BroadWay\DemoEF\DemoEF.DAL\bin\Debug\net8.0\DemoEF.DAL.deps.json
+C:\BroadWay\DemoEF\DemoEF.DAL\bin\Debug\net8.0\DemoEF.DAL.runtimeconfig.json
+C:\BroadWay\DemoEF\DemoEF.DAL\bin\Debug\net8.0\DemoEF.DAL.dll
+C:\BroadWay\DemoEF\DemoEF.DAL\bin\Debug\net8.0\DemoEF.DAL.pdb
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\DemoEF.DAL.dll
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\refint\DemoEF.DAL.dll
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\DemoEF.DAL.pdb
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\DemoEF.DAL.genruntimeconfig.cache
+C:\BroadWay\DemoEF\DemoEF.DAL\obj\Debug\net8.0\ref\DemoEF.DAL.dll
