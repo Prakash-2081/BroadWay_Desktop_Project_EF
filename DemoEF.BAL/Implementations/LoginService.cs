@@ -2,6 +2,8 @@
 using Demo.BAL.Interfaces;
 using Demo.DAL.Implementations;
 using Demo.DAL.Interfaces;
+using DemoEF.BAL.Dto;
+using DemoEF.BAL.Utilities;
 
 namespace Demo.BAL.Implementations
 {
@@ -12,11 +14,21 @@ namespace Demo.BAL.Implementations
         {
             _loginRepository = loginRepository;
         }
-        public async Task<bool> LoginAsync(string username, string password)
+        public async Task<OutputDto> LoginAsync(string username, string password)
         {
-           
-            int count=await _loginRepository.LoginAsync(username,password);
-            return count > 0;
+            try
+            {
+                int count = await _loginRepository.LoginAsync(username, password);
+                if (count> 0)
+                {
+                    return OutputDtoConverter.SetSuccess();
+                }
+                return OutputDtoConverter.SetFailed("Invalid Login");
+            }
+            catch (Exception ex)
+            {
+                return OutputDtoConverter.SetFailed(ex.Message);
+            }
         }
     }
 }

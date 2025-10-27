@@ -1,14 +1,15 @@
 ﻿using Demo.DAL.Dto;
-using Demo.DAL.Models;
+using DemoEF.BAL.Dto;
 using DemoEF.DAL.Dto;
 
 namespace Demo.BAL.Interfaces
 {
     public interface IStudentReadServices
     {
-        Task<StudentDetailDto> GetStudentByIdAsync(int id);
-        Task<List<StudentReadDto>> GetAllStudentsAsync();
-        Task<List<DropdownDto>> GetAllCoursesAsync();
-        Task<List<DropdownDto>> GetAllHobbiesAsync();
+        string FilePath { get; }
+        Task<OutputDto<DropdownDto>> GetAllCoursesAsync();
+        Task<OutputDto<DropdownDto>> GetAllHobbiesAsync();
+        Task<OutputDto<StudentReadDto>> GetAllStudentsAsync();
+        Task<OutputDto<StudentDetailDto>> GetStudentByIdAsync(int id);
     }
 }

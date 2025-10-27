@@ -3,6 +3,10 @@ using Demo.DAL.Constants;
 using Demo.DAL.Dto;
 using Demo.DAL.Implementations;
 using Demo.DAL.Models;
+using DemoEF.BAL.Dto;
+using DemoEF.BAL.Enums;
+using DemoEF.DAL.Dto;
+using DemoEF.Desktop.Utilities;
 using System.Data;
 
 
@@ -13,6 +17,8 @@ namespace Demo.Desktop
         private readonly IStudentReadServices _studentReadServices;
         private readonly IStudentWriteServices _studentWriteServices;
         private int _studentId;
+        private string _uploadedFile; //This is to store the uploaded file path (declared)
+        private string _existingProfile; //declared to store existing profile path from db
 
         private List<StudentReadDto> _students;
 
@@ -98,10 +104,18 @@ namespace Demo.Desktop
             });
             dgvStudents.Columns.Add(new DataGridViewColumn
             {
-                Name = nameof(StudentReadDto.Profile),
+                Name = Path.GetFileName(nameof(StudentReadDto.Profile)),
                 HeaderText = "Profile",
-                DataPropertyName = nameof(StudentReadDto.Profile),
+                DataPropertyName = Path.GetFileName(nameof(StudentReadDto.Profile)),
                 CellTemplate = new DataGridViewTextBoxCell()
+            });
+            dgvStudents.Columns.Add(new DataGridViewColumn
+            {
+                Name = nameof(StudentReadDto.DOB),
+                HeaderText = "Date Of Birth",
+                DataPropertyName = nameof(StudentReadDto.DOB),
+                CellTemplate = new DataGridViewTextBoxCell()
+
             });
             dgvStudents.Columns.Add(new DataGridViewColumn
             {
@@ -116,10 +130,13 @@ namespace Demo.Desktop
 
         private async Task LoadStudentsAsync()
         {
-            _students = await _studentReadServices.GetAllStudentsAsync();
-            dgvStudents.DataSource = _students;
-
-            UpdateSerialNumber();
+            var result = await _studentReadServices.GetAllStudentsAsync();
+            if (result.Status == Status.Success)
+            {
+                _students = result.Data;
+                dgvStudents.DataSource = _students;
+                UpdateSerialNumber();
+            }
 
         }
 
@@ -159,15 +176,16 @@ namespace Demo.Desktop
         }
         private async Task LoadHobbiesAsync()
         {
-            var table = await _studentReadServices.GetAllHobbiesAsync();
+            var result = await _studentReadServices.GetAllHobbiesAsync();
+            var table = result.Data;
             clbHobby.DataSource = table;
             clbHobby.DisplayMember = nameof(DropdownDto.Name);
             clbHobby.ValueMember = nameof(DropdownDto.Id);
         }
         private async Task LoadCourseAsync()
         {
-
-            var courses = await _studentReadServices.GetAllCoursesAsync();
+            var result = await _studentReadServices.GetAllCoursesAsync();
+            var courses = result.Data;
             courses.Insert(0, new DropdownDto { Id = 0, Name = "Please Select a Course" });
             cmbCourse.DataSource = courses;
             cmbCourse.DisplayMember = nameof(DropdownDto.Name);
@@ -226,15 +244,13 @@ namespace Demo.Desktop
             await FormSubmit();
 
         }
-
-        private async Task FormSubmit()
+        private async Task UpsertSync(bool save = true)
         {
             string firstName = txtFirstName.Text;
             string lastName = txtLastName.Text;
             string fee = txtFee.Text;
             bool gender = rbMale.Checked;
             bool agree = chkAgree.Checked;
-            string profile = txtProfileName.Text;
             int course = (int)cmbCourse.SelectedValue;
             DateOnly dob = DateOnly.FromDateTime(dtpDOB.Value);
             var hobbyIds = clbHobby
@@ -242,32 +258,195 @@ namespace Demo.Desktop
                            .Cast<DropdownDto>()
                            .Select(h => h.Id)
                            .ToList();
-            var student = new StudentCreateDto
-            {
-                FirstName = firstName,
-                LastName = lastName,
-                Fee = fee,
-                Gender = gender,
-                CourseId = course,
-                DOB = dob,
-                Agree = agree,
-                Profile = profile,
-                HobbyIds = hobbyIds
-            };
 
-            bool isSuccess = StudentFormValidationCheck(student);
-
-            if (!isSuccess)
+            if (save)
             {
-                return;
+                var student = new StudentCreateDto
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Fee = fee,
+                    Gender = gender,
+                    CourseId = course,
+                    DOB = dob,
+                    Agree = agree,
+                    HobbyIds = hobbyIds
+                };
+
+                bool isSuccess = StudentFormValidationCheck(student);
+
+                if (!isSuccess)
+                {
+                    //ClearTextField();
+                    return;
+                }
+
+                string profile = SaveImage($"{student.FirstName}_{student.LastName}");
+                student.Profile = profile;
+
+                var result = await _studentWriteServices.SaveDataAsync(student);
+                await OnSuccessAsync(result);
+                ResetImage();
+
+
             }
-            if (isSuccess)
+            else
             {
-                await _studentWriteServices.SaveDataAsync(student);
-                await LoadStudentsAsync();
+                string profileImage = pbProfile.ImageLocation;
+                var student = new StudentUpdateDto
+                {
+                    Id = _studentId,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Fee = fee,
+                    Profile = profileImage,
+                    Gender = gender,
+                    CourseId = course,
+                    DOB = dob,
+                    Agree = agree,
+                    HobbyIds = hobbyIds
+                };
+
+                bool isSuccess = StudentFormValidationCheck(student);
+
+                if (!isSuccess)
+                {
+                    //ClearTextField();
+                    return;
+                }
+                if (!String.IsNullOrWhiteSpace(_uploadedFile))
+                {
+                    _studentWriteServices.RemoveImage(_existingProfile);
+                    string profile = SaveImage($"{student.FirstName}_{student.LastName}");
+                    student.Profile = profile;
+                }
+
+                var result = await _studentWriteServices.UpdateDataAsync(student);
+                await OnSuccessAsync(result);
+                ResetImage();
+
+            }
+        }
+
+        private string SaveImage(string name)
+        {
+            StudentImageRequest request = new()
+            {
+                Name = name,
+                Source = _uploadedFile,
+            };
+            var imageRequest = _studentWriteServices.SaveImage(request);
+            string profile = imageRequest.Status == Status.Success ? imageRequest
+                                                                        .Data
+                                                                        .Select(x => x.FileName)
+                                                                        .SingleOrDefault()
+                                                                        :
+                                                                        null;
+            return profile;
+        }
+
+        private async Task OnSuccessAsync(OutputDto result)
+        {
+            if (result.Status == Status.Success)
+            {
 
                 ClearTextField();
-                MessageBox.Show("Saved Success", "Success", MessageBoxButtons.OK);
+                await LoadStudentsAsync();
+                DialogMessage.SuccessAlert(result);
+            }
+            else
+            {
+                DialogMessage.FailedAlert(result);
+            }
+
+        }
+
+        private async Task FormSubmit()
+        {
+            await UpsertSync();
+        }
+
+        private async void btnUpdate_Click(object sender, EventArgs e)
+        {
+            if (_studentId > 0)
+            {
+                await UpsertSync(false);
+                return;
+            }
+            DialogMessage.FailedAlert("Please select a Id before Updating");
+            //btnSubmit.Enabled = false;
+
+        }
+
+        private async void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (_studentId > 0)
+            {
+                var result = await _studentWriteServices.DeleteDataAsync(_studentId);
+                await OnSuccessAsync(result);
+                return;
+            }
+            DialogMessage.FailedAlert("Please select a Id before Deleting");
+            //btnSubmit.Enabled = false;
+
+        }
+
+        private async void dgvStudents_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            _studentId = (int)dgvStudents.CurrentRow.Cells[nameof(StudentReadDto.Id)].Value;
+
+            if (_studentId > 0)
+            {
+                btnSubmit.Enabled = false;
+                var result = await _studentReadServices.GetStudentByIdAsync(_studentId);
+                if (result.Status == Status.Success)
+                {
+                    var students = result.Data.SingleOrDefault();
+
+                    txtFirstName.Text = students.FirstName;
+                    txtLastName.Text = students.LastName;
+                    txtFee.Text = students.Fee;
+                    if (students.Gender == true)
+                    {
+                        rbMale.Checked = true;
+                    }
+                    else
+                    {
+                        rbFemale.Checked = true;
+                    }
+                    cmbCourse.Text = students.Course;
+                    ResetHobbies();
+
+                    var hobbies = clbHobby.Items.Cast<DropdownDto>().ToList();
+                    foreach (int hobbyId in students.HobbyIds)
+                    {
+                        var hobby = hobbies.FirstOrDefault(x => x.Id == hobbyId);
+                        int index = clbHobby.Items.IndexOf(hobby);
+                        clbHobby.SetItemChecked(index, true);
+                    }
+                    dtpDOB.CustomFormat = ApplicationConstant.DateFormat;
+                    dtpDOB.Value = students.DOB.ToDateTime(TimeOnly.MinValue);
+                    chkAgree.Checked = students.Agree;
+                    ResetImage();
+
+                    if (!String.IsNullOrEmpty(students.Profile))
+                    {
+                        _existingProfile=students.Profile;  
+                        txtProfileName.Text = Path.GetFileName(students.Profile);
+                        pbProfile.Load(students.Profile);
+                    }
+
+                }
+                else
+                {
+                    DialogMessage.FailedAlert(result);
+                }
+
+            }
+            else
+            {
+                DialogMessage.FailedAlert($"Please select a {_studentId}");
+
             }
 
         }
@@ -333,6 +512,8 @@ namespace Demo.Desktop
         private void btnCancel_Click(object sender, EventArgs e)
         {
             ClearTextField();
+            ResetImage();
+            btnSubmit.Enabled = true;
         }
 
         private void ClearTextField()
@@ -362,17 +543,24 @@ namespace Demo.Desktop
         {
             if (imageUploadDialog.ShowDialog() == DialogResult.OK)
             {
-                pbProfile.Load(imageUploadDialog.FileName);
+                _uploadedFile = imageUploadDialog.FileName;
+                pbProfile.Load(_uploadedFile);
                 txtProfileName.Text = imageUploadDialog.SafeFileName;
-
             }
-
         }
 
-        private void btnRemove_Click(object sender, EventArgs e)
+        private async void btnRemove_Click(object sender, EventArgs e)
+        {
+            await _studentWriteServices.RemoveImageAsync(_studentId,_existingProfile);
+            ResetImage();
+        }
+
+        private void ResetImage()
         {
             pbProfile.Image = null;
             txtProfileName.Clear();
+            _uploadedFile = null;
+            _existingProfile= null;
         }
 
         private void imageUploadDialog_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
@@ -455,7 +643,8 @@ namespace Demo.Desktop
         private async void txtSearch_TextChanged(object sender, EventArgs e)
         {
             string search = txtSearch.Text;
-            _students = await _studentReadServices.GetAllStudentsAsync();
+            var result = await _studentReadServices.GetAllStudentsAsync();
+            _students = result.Data;
 
             if (String.IsNullOrWhiteSpace(search))
             {
@@ -488,78 +677,6 @@ namespace Demo.Desktop
             {
                 lblHobbyError.Visible = false;
             }
-
-
-        }
-
-        private void btnUpdate_Click(object sender, EventArgs e)
-        {
-            if (_studentId > 0)
-            {
-                //update
-            }
-
-            MessageBox.Show("Plz select a Id before Updating", "Update", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-        }
-
-        private void btnDelete_Click(object sender, EventArgs e)
-        {
-            if (_studentId > 0)
-            {
-                //delete
-            }
-            MessageBox.Show("Plz select a Id before Deleting", "Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
-
-        private async void dgvStudents_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        {
-            _studentId = (int)dgvStudents.CurrentRow.Cells[nameof(StudentReadDto.Id)].Value;
-
-            if (_studentId > 0)
-            {
-                var students=await _studentReadServices.GetStudentByIdAsync(_studentId);
-                if (students is not null)
-                {
-                    txtFirstName.Text = students.FirstName;
-                    txtLastName.Text = students.LastName;
-                    txtFee.Text = students.Fee;
-                    if (students.Gender == true)
-                    {
-                        rbMale.Checked = true;
-                    }
-                    else
-                    {
-                        rbFemale.Checked = false;
-                    }
-                    cmbCourse.Text=students.Course;
-                    ResetHobbies();
-
-                    var hobbies = clbHobby.Items.Cast<DropdownDto>().ToList();
-                    foreach (int hobbyId in students.HobbyIds)
-                    {
-                        var hobby = hobbies.FirstOrDefault(x => x.Id == hobbyId);
-                        int index = clbHobby.Items.IndexOf(hobby);
-                        clbHobby.SetItemChecked(index,true);
-                    }
-
-                    dtpDOB.Value = students.DOB.ToDateTime(TimeOnly.MinValue);
-                    chkAgree.Checked = students.Agree;
-
-                    if (!String.IsNullOrEmpty(students.Profile))
-                    {
-                        txtProfileName.Text = students.Profile;
-                        pbProfile.Load(students.Profile);
-                    }
-
-                }
-
-            }
-            else
-            {
-                MessageBox.Show("Please select a Id","Warning",MessageBoxButtons.OK,MessageBoxIcon.Warning);
-            }
-            
         }
     }
 }

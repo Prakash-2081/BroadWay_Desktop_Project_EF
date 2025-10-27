@@ -1,5 +1,6 @@
-﻿using Demo.BAL.Implementations;
-using Demo.BAL.Interfaces;
+﻿using Demo.BAL.Interfaces;
+using DemoEF.BAL.Enums;
+using DemoEF.Desktop.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using System.Data;
 
@@ -9,8 +10,29 @@ namespace Demo.Desktop
     {
        
         public readonly ILoginService _loginService;
+        private int _number;
+        public int Number 
+        {
+            get
+            {
+                if (_number > 10)
+                {
+                    return _number;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+            set
+            {
+                _number = value;
+            }
+        }
         public LoginForm(ILoginService loginService)
         {
+            _number = 5;
+            Console.WriteLine(Number);
             _loginService = loginService;
             InitializeComponent();
             InitiallizeFormComponent();
@@ -63,17 +85,16 @@ namespace Demo.Desktop
             bool isSuccess = ValidateLogin(userName, password);
 
             if (!isSuccess) return;
-
-            if (await _loginService.LoginAsync(userName,password))
+            var result = await _loginService.LoginAsync(userName, password);
+            if (result.Status ==Status.Success)
             {
-                var studentForm=Program.ServiceProvider.GetService<StudentForm>();
+                var studentForm = Program.ServiceProvider.GetService<StudentForm>();
                 studentForm.Show();
                 this.Hide();
                 return;
 
             }
-
-            MessageBox.Show("Invalid UserName or Password", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            DialogMessage.FailedAlert(result);
         }
 
         private bool ValidateLogin(string userName, string password)

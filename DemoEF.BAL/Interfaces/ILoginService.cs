@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DemoEF.BAL.Dto;
 
 namespace Demo.BAL.Interfaces
 {
     public interface ILoginService
     {
-        Task<bool> LoginAsync(string username, string password);
+        Task<OutputDto> LoginAsync(string username, string password);
     }
 }

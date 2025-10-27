@@ -19,7 +19,7 @@ namespace DemoEF.BAL.Utilities
                 Agree=x.Agree? "Yes": "No",
                 Profile=x.Profile,
                 DOB=x.DOB.FormatDate(),
-                CreatedDate=x.DOB.FormatDate(),
+                CreatedDate=x.CreatedDate.ToString(),
                 Course=x.Course.Name,
                 Hobbies=String.Join(", ",x.StudentHobbies
                 .Select(h=>h.Hobby.Name)
@@ -29,10 +29,11 @@ namespace DemoEF.BAL.Utilities
 
             return studentList;
         }
-        public static StudentDetailDto ConvertToStudentUpdateDto(this Student studentData)
+        public static StudentDetailDto ConvertToStudentDetailDto(this Student studentData)
         {
             var student = new StudentDetailDto
             {
+                Id=studentData.Id,
                 FirstName = studentData.FirstName,
                 LastName = studentData.LastName,
                 Fee = studentData.Fee,
@@ -41,10 +42,9 @@ namespace DemoEF.BAL.Utilities
                 Agree = studentData.Agree,
                 Course = studentData.Course.Name,
                 DOB = studentData.DOB,
-                HobbyIds = studentData.StudentHobbies.Select(x => x.HobbyId).ToList()
+                HobbyIds = studentData.StudentHobbies.Select(x => x.HobbyId).ToList(),
+                
             };
-
-
             return student;
         }
     }

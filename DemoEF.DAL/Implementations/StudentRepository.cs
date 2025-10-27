@@ -1,5 +1,4 @@
-﻿using Demo.DAL.Dto;
-using Demo.DAL.Interfaces;
+﻿using Demo.DAL.Interfaces;
 using DemoEF.DAL.Data;
 using DemoEF.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -54,10 +53,12 @@ namespace Demo.DAL.Implementations
             return hobbies;
         }
 
-       
+
         #endregion Read
 
         #region Write
+
+        
         public async Task SaveDataAsync(Student student)
         {
             await _context
@@ -66,7 +67,56 @@ namespace Demo.DAL.Implementations
 
             await _context
                     .SaveChangesAsync();
-        } 
+        }
+
+        public async Task UpdateDataAsync(Student student)
+        {
+            var existingStudent = await _context
+                                            .Students
+                                            .Include(x=>x.StudentHobbies)
+                                            .FirstOrDefaultAsync(x => x.Id == student.Id);
+            if (existingStudent is not null)
+            {
+                existingStudent.FirstName = student.FirstName;
+                existingStudent.LastName = student.LastName;
+                existingStudent.Fee = student.Fee;
+                existingStudent.Gender = student.Gender;
+                existingStudent.CourseId = student.CourseId;
+                existingStudent.DOB = student.DOB;
+                existingStudent.StudentHobbies.Clear();
+                existingStudent.StudentHobbies = student.StudentHobbies;
+                existingStudent.Agree = student.Agree;
+                existingStudent.Profile = student.Profile;
+            }
+            await _context
+                     .SaveChangesAsync();
+        }
+
+        public async Task DeleteDataAsync(int id)
+        {
+            var existingStudent = await _context
+                                       .Students
+                                       .FirstOrDefaultAsync(x => x.Id == id);
+            if (existingStudent is not null)
+            {
+                _context.Students.Remove(existingStudent);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task RemoveImageAsync(int id)
+        {
+            var existingStudent = await _context
+                                        .Students
+                                        .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (existingStudent is not null)
+            {
+                existingStudent.Profile = null;
+                await _context.SaveChangesAsync();
+            }
+        }
+
         #endregion Write
     }
 }
